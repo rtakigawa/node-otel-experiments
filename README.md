@@ -14,36 +14,20 @@ docker run \
     postgres
 ```
 
-## call api
-
-### POST
+## run Jaeger
 
 ```sh
-curl \
-    -X POST \
-    -H 'Content-Type: application/json' \
-    -d '{"title": "book flight to tokyo", "description": "due date is this weekend."}' \
-    http://localhost:8080/todo \
+docker run --rm \
+  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+  -p 16686:16686 \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:latest
 ```
 
-### GET list
+## call api
 
 ```sh
 curl http://localhost:8080/todo
-```
-
-### GET by id
-
-```sh
-curl http://localhost:8080/todo/:id
-```
-
-### PUT
-
-```sh
-curl \
-    -X PUT \
-    -H 'Content-Type: application/json' \
-    -d '{"title": "book flight to saitama", "description": "due date is next weekend."}' \
-    http://localhost:8080/todo/:id
 ```

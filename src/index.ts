@@ -8,18 +8,6 @@ app.use(express.json());
 
 app.use("/todo", todoRouter);
 
-app.use(
-  (
-    err: Error,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    console.error(err);
-    res.status(500).send("internal server error");
-  }
-);
-
 app.listen(PORT, () => {
   console.log(`Listening for requests on http://localhost:${PORT}`);
 });
