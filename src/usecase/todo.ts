@@ -1,37 +1,30 @@
+import { Span, trace } from "@opentelemetry/api";
 import { Todo } from "@prisma/client";
 import { prisma } from "../db";
 
-export async function listTodo(): Promise<Todo[]> {
-  return await prisma.todo.findMany();
+const tracer = trace.getTracer("usecase");
+
+type UsecaseArgument<P, R> = (span: Span, params: P) => Promise<R>;
+function usecase<P, R>(name: string, fn: UsecaseArgument<P, R>) {
+  return (params: P) => {
+    return tracer.startActiveSpan(
+      `usecase:${name}`,
+      {
+        attributes: {
+          "usecase.name": name,
+        },
+      },
+      async (span: Span) => {
+        const result = await fn(span, params);
+        span.end();
+        return result;
+      }
+    );
+  };
 }
 
-export async function todo(id: number): Promise<Todo | null> {
-  return prisma.todo.findUnique({ where: { id } });
-}
-
-export async function createTodo(
-  title: string,
-  description: string
-): Promise<Todo> {
-  return prisma.todo.create({ data: { title, description } });
-}
-
-export async function updateTodo(
-  id: number,
-  title: string,
-  description: string
-): Promise<Todo | null> {
-  return prisma.todo.update({ where: { id }, data: { title, description } });
-}
-
-export async function deleteTodo(id: number): Promise<Todo | null> {
-  return prisma.todo.delete({ where: { id } });
-}
-
-export async function doneTodo(id: number): Promise<Todo | null> {
-  return prisma.todo.update({ where: { id }, data: { done: true } });
-}
-
-export async function undoneTodo(id: number): Promise<Todo | null> {
-  return prisma.todo.update({ where: { id }, data: { done: false } });
-}
+export const listTodo = usecase<void, Todo[]>("listTodo", async (span) => {
+  const result = await prisma.todo.findMany();
+  span.setAttribute("todo.count", result.length);
+  return result;
+});
